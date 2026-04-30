@@ -28,12 +28,8 @@ ENV/
 .ipynb_checkpoints/
 *.ipynb
 
-# ── PyTorch checkpoints ───────────────────────────────────────────────────────
-# Keep only the best model; epoch checkpoints are large and regenerable
-checkpoints/fcnn_epoch*.pt
-checkpoints/training_history.npy
-# To also ignore the best checkpoint, uncomment:
-# checkpoints/fcnn_best.pt
+# ── Trained models / checkpoints (regenerable via train.py) ──────────────────
+checkpoints/
 
 # ── All datasets (archives, raw images, processed data, real test pairs) ──────
 datasets/
@@ -45,7 +41,6 @@ outputs/
 pipeline_verification_report.txt
 pipeline_verification_plots.png
 sample_raw_images.png
-checkpoints/training_curves.png
 
 # ── OS / editor ───────────────────────────────────────────────────────────────
 .DS_Store
