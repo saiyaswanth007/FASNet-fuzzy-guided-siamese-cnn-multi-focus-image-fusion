@@ -35,19 +35,8 @@ checkpoints/training_history.npy
 # To also ignore the best checkpoint, uncomment:
 # checkpoints/fcnn_best.pt
 
-# ── Synthetic training data (large, fully regenerable via run_pipeline.sh) ────
-datasets/synthetic/raw_imagenet/
-datasets/synthetic/blurred/
-datasets/synthetic/patches/
-datasets/synthetic/training_dataset.npz
-datasets/synthetic/training_dataset_norm.npz
-
-# ── Dataset archives (large binary files) ────────────────────────────────────
-datasets/*.zip
-datasets/*.rar
-datasets/*.tar
-datasets/*.tar.gz
-datasets/*.7z
+# ── All datasets (archives, raw images, processed data, real test pairs) ──────
+datasets/
 
 # ── Fusion outputs (regenerable) ─────────────────────────────────────────────
 outputs/
@@ -88,15 +77,8 @@ Thumbs.db
 #   train.py                                 — training loop (SGD, paper params)
 #   verify_pipeline.py                       — pipeline health check
 #   run_pipeline.sh                          — end-to-end shell script
-#   datasets/real/  dataset1_lytro/          — 20 Lytro test pairs  (tracked)
-#                   dataset2_mfif/           — 21 MFIF test pairs   (tracked)
-#   checkpoints/    fcnn_best.pt             — best trained model    (tracked)
+#
+# NOTE: No data is tracked. Regenerate everything with:
+#   ./run_pipeline.sh
 #
 # =============================================================================
-
-# Force-track real datasets (small, needed for evaluation — override above)
-!datasets/real/
-!datasets/real/**
-
-# Force-track best checkpoint
-!checkpoints/fcnn_best.pt
