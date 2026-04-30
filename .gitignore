@@ -1,0 +1,102 @@
+# =============================================================================
+# .gitignore — FCNN-MFIF  (Bhalla et al., JVCIR 2022)
+# =============================================================================
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+.installed.cfg
+
+# ── Virtual environments ───────────────────────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+.env
+
+# ── Jupyter ───────────────────────────────────────────────────────────────────
+.ipynb_checkpoints/
+*.ipynb
+
+# ── PyTorch checkpoints ───────────────────────────────────────────────────────
+# Keep only the best model; epoch checkpoints are large and regenerable
+checkpoints/fcnn_epoch*.pt
+checkpoints/training_history.npy
+# To also ignore the best checkpoint, uncomment:
+# checkpoints/fcnn_best.pt
+
+# ── Synthetic training data (large, fully regenerable via run_pipeline.sh) ────
+datasets/synthetic/raw_imagenet/
+datasets/synthetic/blurred/
+datasets/synthetic/patches/
+datasets/synthetic/training_dataset.npz
+datasets/synthetic/training_dataset_norm.npz
+
+# ── Dataset archives (large binary files) ────────────────────────────────────
+datasets/*.zip
+datasets/*.rar
+datasets/*.tar
+datasets/*.tar.gz
+datasets/*.7z
+
+# ── Fusion outputs (regenerable) ─────────────────────────────────────────────
+outputs/
+
+# ── Verification & plot artefacts ────────────────────────────────────────────
+pipeline_verification_report.txt
+pipeline_verification_plots.png
+sample_raw_images.png
+checkpoints/training_curves.png
+
+# ── OS / editor ───────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+*.code-workspace
+
+# ── Logs & temp ───────────────────────────────────────────────────────────────
+*.log
+*.tmp
+*.bak
+/tmp/
+
+# =============================================================================
+# What IS tracked (committed to git):
+# =============================================================================
+#
+#   model/          siamese_fcnn.py          — architecture
+#   inference/      score_map.py             — SM/FM generation
+#                   fusion.py                — full fusion pipeline
+#   utils/          fuzzy_preprocessing.py   — S-membership fuzzification
+#                   image_utils.py
+#   scripts/        01–05_*.py               — dataset pipeline scripts
+#                   ingest_*.py
+#   train.py                                 — training loop (SGD, paper params)
+#   verify_pipeline.py                       — pipeline health check
+#   run_pipeline.sh                          — end-to-end shell script
+#   datasets/real/  dataset1_lytro/          — 20 Lytro test pairs  (tracked)
+#                   dataset2_mfif/           — 21 MFIF test pairs   (tracked)
+#   checkpoints/    fcnn_best.pt             — best trained model    (tracked)
+#
+# =============================================================================
+
+# Force-track real datasets (small, needed for evaluation — override above)
+!datasets/real/
+!datasets/real/**
+
+# Force-track best checkpoint
+!checkpoints/fcnn_best.pt
