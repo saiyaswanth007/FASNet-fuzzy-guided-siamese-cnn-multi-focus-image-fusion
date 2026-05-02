@@ -3,14 +3,11 @@
 scripts/03_generate_blur_levels.py
 ====================================
 Generates 5 progressively blurred versions of each source image by
-applying a Gaussian filter sequentially — exactly as specified in the paper.
-
-Paper reference (Section 3.2, Fig 4):
-  "Gaussian filters with a standard deviation of 0.5."
-  "In the first level, the simulation uses a Gaussian filter with a 0.5
-   standard deviation value. And in the second level, the blurred image has
-   been obtained using the first level blurred image with the Gaussian filter
-   and the same procedure has been continued till five levels."
+applying a Gaussian filter sequentially. Gaussian filters with a standard deviation of 0.5 are used.
+  In the first level, the simulation uses a Gaussian filter with a 0.5
+  standard deviation value. And in the second level, the blurred image has
+  been obtained using the first level blurred image with the Gaussian filter
+  again, and so on.
 
 Input:
   datasets/synthetic/raw_imagenet/*.png   (5,000 grayscale 520×520 images)
@@ -108,11 +105,11 @@ def main() -> None:
     )
     parser.add_argument(
         "--sigma", type=float, default=BLUR_SIGMA,
-        help=f"Gaussian blur sigma (paper: {BLUR_SIGMA}, default: {BLUR_SIGMA})"
+        help=f"Gaussian blur sigma (default: {BLUR_SIGMA})"
     )
     parser.add_argument(
         "--n-levels", type=int, default=N_BLUR_LEVELS,
-        help=f"Number of blur levels (paper: {N_BLUR_LEVELS}, default: {N_BLUR_LEVELS})"
+        help=f"Number of blur levels (default: {N_BLUR_LEVELS})"
     )
     args = parser.parse_args()
 

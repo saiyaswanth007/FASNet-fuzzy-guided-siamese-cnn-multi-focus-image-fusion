@@ -3,18 +3,15 @@
 scripts/05_build_training_dataset.py
 ======================================
 Assembles the final labelled training dataset (patches_A, patches_B, labels)
-exactly as described in Section 3.2 of the paper.
+exactly as originally described.  A total of 5,000 images from an ImageNet database are retrieved, where
+  2500 images are positive samples, whose output is set to be 1 and 2500
+  negative samples with 0. Each sample consisted of two input image patches
+  (16 × 16) and reference image labels, i.e., 1 or 0.
 
-Paper specification:
-  "A total of 5,000 images from an ImageNet database are retrieved, where
-   2500 images are positive samples, whose output is set to be 1 and 2500
-   negative samples with 0. Each sample consisted of two input image patches
-   (16 × 16) and reference image labels, i.e., 1 or 0."
+  Images are rotated by 90° and 180° in both horizontal and vertical
+  directions. Data augmentation is done to increase the dataset size.
 
-  "Images are rotated by 90° and 180° in both horizontal and vertical
-   directions. Data augmentation is done to increase the dataset size."
-
-Label convention (from the paper):
+Label convention:
   Label = 1 → patch_A is FOCUSED   (patch_A from original, patch_B from blurred)
   Label = 0 → patch_A is BLURRED   (patch_A from blurred,  patch_B from original)
 
@@ -53,7 +50,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 from utils.image_utils import augment_patch, N_BLUR_LEVELS, PATCH_SIZE
 
-# Paper values (Section 3.2)
+# Default Values
 N_POSITIVE = 2_500   # label=1 samples (focused A, blurred B)
 N_NEGATIVE = 2_500   # label=0 samples (blurred A, focused B)
 
@@ -217,15 +214,15 @@ def main() -> None:
     )
     parser.add_argument(
         "--n-positive", type=int, default=N_POSITIVE,
-        help=f"Number of positive (label=1) samples (paper: {N_POSITIVE})"
+        help=f"Number of positive (label=1) samples (default: {N_POSITIVE})"
     )
     parser.add_argument(
         "--n-negative", type=int, default=N_NEGATIVE,
-        help=f"Number of negative (label=0) samples (paper: {N_NEGATIVE})"
+        help=f"Number of negative (label=0) samples (default: {N_NEGATIVE})"
     )
     parser.add_argument(
         "--augment", action="store_true", default=True,
-        help="Apply 90°/180° rotation augmentation (paper: yes). Default: True."
+        help="Apply 90°/180° rotation augmentation"
     )
     parser.add_argument(
         "--no-augment", dest="augment", action="store_false",

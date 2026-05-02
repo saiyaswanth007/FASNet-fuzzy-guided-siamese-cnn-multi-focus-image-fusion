@@ -5,15 +5,13 @@ scripts/01_download_real_datasets.py
 Downloads and organises the three real multi-focus test datasets used in:
 
   "A Fuzzy Convolutional Neural Network for Multi-Focus Image Fusion"
-  Bhalla et al., JVCIR 2022.  Section 3.1.
 
-Paper spec:
   - Dataset 1: 20 Lytro multi-focus image pairs  (no ground truth)
   - Dataset 2: 21 multi-focus image pairs         (no ground truth)
   - Dataset 3: 15 multi-focus image pairs + reference GT
 
-  "The size of each image in a dataset is 520 × 520 pixels."  (Section 3.1)
-  "The colored images are converted to a grayscale domain."   (Section 3.2)
+  The size of each image in a dataset is 520 × 520 pixels.
+  The colored images are converted to a grayscale domain.
 
 Output layout:
   datasets/real/dataset1_lytro/pair_001/ {A.png, B.png}
@@ -128,7 +126,7 @@ def preprocess_and_save(src_path,
     """
     Load image → grayscale → resize to 520×520 → save as PNG.
     *src_path* may be a str, Path, or file-like object (e.g. io.BytesIO).
-    Matches paper Section 3.1 and 3.2.
+    Matches original specifications.
     """
     img = Image.open(src_path).convert("L")   # PIL accepts path or file-like
     img = img.resize(TARGET_SIZE, Image.BICUBIC)
@@ -326,9 +324,7 @@ DATASET 2 — MFIF WHU (21 pairs, no GT)
   → Place as: datasets/real/dataset2_mfif/pair_NNN/{A.png, B.png}
 
 DATASET 3 — With Ground Truth (15 pairs)
-  URL: https://www.semanticscholar.org/paper/
-       Empirical-Study-of-Multi-focus-Image-Fusion-Methods/
-  Alt: https://github.com/bitname/Multi-focus-image-fusion-ground-truth-dataset
+  Source: https://github.com/bitname/Multi-focus-image-fusion-ground-truth-dataset
   → Place as: datasets/real/dataset3_gt/pair_NNN/{A.png, B.png, GT.png}
 
 After placing images, re-run this script to preprocess them:

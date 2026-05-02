@@ -4,12 +4,9 @@ scripts/02_download_imagenet_proxy.py
 ======================================
 Downloads 5,000 natural images from the COCO 2017 validation set to serve
 as the "fully focused" source images for the synthetic training dataset.
-
-Paper reference:
-  "Training examples are generated using the publicly accessible ImageNet
-   Large Scale Visual Recognition Challenge (ILSVRC) 2012 dataset and
-   these images are considered to be focused."
-   (Bhalla et al., 2022 — Section 3.2)
+  Training examples are generated using the publicly accessible ImageNet
+  Large Scale Visual Recognition Challenge (ILSVRC) 2012 dataset and
+  these images are considered to be focused.
 
 Since ILSVRC 2012 requires academic registration, we use COCO 2017 val
 (118K open-access natural images) as a freely available substitute.
@@ -57,7 +54,7 @@ COCO_ANN_URL = (
 # Smaller, val-only annotations JSON inside the zip:
 COCO_VAL_JSON = "annotations/instances_val2017.json"
 
-N_TOTAL_REQUESTED = 5_000          # paper: 5,000 source images (Section 3.2)
+N_TOTAL_REQUESTED = 5_000          # 5,000 source images
 DOWNLOAD_TIMEOUT  = 20             # seconds per image
 MAX_RETRIES       = 2
 RETRY_DELAY       = 1.0            # seconds between retries

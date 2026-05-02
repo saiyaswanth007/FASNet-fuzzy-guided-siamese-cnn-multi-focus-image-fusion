@@ -3,11 +3,7 @@ model/siamese_fcnn.py
 ======================
 Siamese Convolutional Neural Network for Multi-Focus Image Fusion.
 
-Exact architecture from Section 2.2 of:
-  "A Fuzzy Convolutional Neural Network for Multi-Focus Image Fusion"
-  Bhalla et al., JVCIR 2022.
-
-Architecture (Table 2 / Fig. 2):
+Architecture for Siamese FCNN:
 ─────────────────────────────────────────────────────────────────────
   Two SHARED-weight branches (one per input patch):
 
@@ -43,7 +39,7 @@ class ConvBlock(nn.Module):
     """
     Single convolutional block: Conv2D → BatchNorm → ReLU.
 
-    Paper notation: N3kKs1  where K = number of feature maps.
+
     """
     def __init__(self, in_channels: int, out_channels: int,
                  kernel_size: int = 3, stride: int = 1, padding: int = 1):
@@ -135,7 +131,7 @@ class SiameseFCNN(nn.Module):
         self.relu = nn.ReLU(inplace=True)
         self.fc2  = nn.Linear(512, 2)              # 512    →   2
 
-        # Xavier weight initialisation (paper Section 3.2)
+        # Xavier weight initialisation
         self._init_weights()
 
     def _init_weights(self) -> None:

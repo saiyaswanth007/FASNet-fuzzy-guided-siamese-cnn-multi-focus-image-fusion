@@ -376,7 +376,6 @@ def generate_report(data_root: Path, report_path: Path,
         header = (
             "=" * 70 + "\n"
             "FCNN-MFIF DATASET PIPELINE — VERIFICATION REPORT\n"
-            "Paper: Bhalla et al., JVCIR 2022\n"
             "=" * 70
         )
         print_and_write(header, fh)

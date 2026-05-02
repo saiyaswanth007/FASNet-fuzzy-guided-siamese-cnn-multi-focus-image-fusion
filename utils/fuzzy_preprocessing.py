@@ -2,19 +2,16 @@
 utils/fuzzy_preprocessing.py
 ==============================
 S-shaped fuzzy membership fuzzification of grayscale images, exactly as
-described in Section 2.1 of:
+described here:
 
-  "A Fuzzy Convolutional Neural Network for Multi-Focus Image Fusion"
-  Bhalla et al., JVCIR 2022.
 
-Paper equations (Section 2.1):
 ─────────────────────────────────────────────────────────────────────────────
 Parameters (computed per image P):
-  γ'  = Entropy(P)                    — Eq. (4)
-  χ'  = median(P)                     — Eq. (5)
-  ν   = (max(P) + mean(P)) / 2        — Eq. (6, derived from M1,M2,M)
+  γ'  = Entropy(P)
+  χ'  = median(P)
+  ν   = (max(P) + mean(P)) / 2
 
-Fuzzification (S-shaped membership function) — Eq. (3):
+Fuzzification (S-shaped membership function):
   μ(P(i,j)) =
     0,                                          if 0 < μ ≤ γ'
     (μ - γ')² / (χ' - γ')(ν - γ'),             if γ' < μ ≤ χ'
@@ -38,16 +35,16 @@ from scipy.stats import entropy as scipy_entropy
 
 
 # ---------------------------------------------------------------------------
-# Parameter computation (paper Eqs. 4, 5, 6)
+# Parameter computation
 # ---------------------------------------------------------------------------
 def _compute_gamma(img_normalized: np.ndarray) -> float:
     """
-    γ' = Entropy(P)  — Eq. (4).
+    γ' = Entropy(P)
 
     Computed on the normalized [0,1] image using the Shannon entropy of
     the pixel intensity histogram (256 bins).
 
-    The paper does not specify the base; we use natural log (nats), which
+    We use natural log (nats), which
     is the standard for scipy.stats.entropy.
     """
     # Histogram over 256 bins on [0,1]
@@ -59,19 +56,19 @@ def _compute_gamma(img_normalized: np.ndarray) -> float:
 
 
 def _compute_chi(img_normalized: np.ndarray) -> float:
-    """χ' = median(P)  — Eq. (5)."""
+    """χ' = median(P)"""
     return float(np.median(img_normalized))
 
 
 def _compute_nu(img_normalized: np.ndarray) -> float:
-    """ν = (max(P) + mean(P)) / 2  — Eq. (6) (M = (M1+M2)/2)."""
+    """ν = (max(P) + mean(P)) / 2"""
     m1 = float(img_normalized.max())
     m2 = float(img_normalized.mean())
     return (m1 + m2) / 2.0
 
 
 # ---------------------------------------------------------------------------
-# S-shaped membership function (paper Eq. 3)
+# S-shaped membership function
 # ---------------------------------------------------------------------------
 def _s_membership(mu: np.ndarray,
                   gamma: float,
@@ -123,7 +120,7 @@ def fuzzify_image(img: np.ndarray) -> np.ndarray:
     """
     Fuzzify a single grayscale image using the S-shaped membership function.
 
-    Steps (exactly as paper Section 2.1):
+    Steps:
       1. Normalise pixel values [0,255] → [0,1]
       2. Compute γ' (entropy), χ' (median), ν (max+mean)/2
       3. Apply S-shaped membership function pixel-wise
@@ -163,7 +160,7 @@ def fuzzify_pair(img_a: np.ndarray,
     Fuzzify a multi-focus image pair (A, B) → (A', B').
 
     Each image is fuzzified independently with its own parameters,
-    matching the paper's per-image parameter calculation.
+    Each image is fuzzified independently with its own parameters.
 
     Parameters
     ----------

@@ -3,11 +3,9 @@ inference/score_map.py
 ========================
 Score Map (SM) and Focus Map (FM) generation for the Siamese FCNN.
 
-Implements Section 2.3 / 2.4 / Algorithm 1 (Steps 3.1-3.3) of:
-  "A Fuzzy Convolutional Neural Network for Multi-Focus Image Fusion"
-  Bhalla et al., JVCIR 2022.
+Implements the core score map logic for FCNN-MFIF.
 
-Paper spec (Eq. 8):
+
   SM size = (⌈H/2⌉ - conv_patchsize + 1) × (⌈W/2⌉ - conv_patchsize + 1)
   where conv_patchsize = 8  (half of 16 due to overlapping)
 
@@ -43,7 +41,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from utils.image_utils import PATCH_SIZE   # 16
 
-STRIDE = PATCH_SIZE // 2   # 8 — produces SM ≈ H/2 × W/2 (paper Eq. 8)
+STRIDE = PATCH_SIZE // 2   # 8 — produces SM ≈ H/2 × W/2
 
 
 # ---------------------------------------------------------------------------
@@ -67,8 +65,8 @@ def generate_score_map(
     model     : trained SiameseFCNN (or any module with same signature)
     img_a     : (H, W) float32 fuzzified image A', values ∈ [0,1]
     img_b     : (H, W) float32 fuzzified image B', values ∈ [0,1]
-    patch_size: 16 (paper-exact)
-    stride    : 8  (paper-exact, produces SM ≈ H/2 × W/2)
+    patch_size: 16
+    stride    : 8
     batch_size: how many patches to process at once (memory trade-off)
     device    : CPU or CUDA
 
@@ -134,7 +132,7 @@ def generate_focus_map(
     """
     Map SM back to original resolution using OVERLAP AVERAGING.
 
-    Paper: "The overlapping pixels of the SM are mapped back to the
+
             original size by the averaging method."
 
     For each SM position (r,c), the score is added to every pixel
@@ -145,8 +143,8 @@ def generate_focus_map(
     ----------
     sm            : (n_rows, n_cols) float32 Score Map
     original_size : (H, W) of the source images
-    patch_size    : 16 (paper-exact)
-    stride        : 8  (paper-exact)
+    patch_size    : 16
+    stride        : 8
 
     Returns
     -------

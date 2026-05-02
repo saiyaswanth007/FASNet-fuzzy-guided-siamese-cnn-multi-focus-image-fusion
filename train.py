@@ -4,11 +4,9 @@ train.py
 =========
 Training script for the Siamese FCNN model.
 
-Exact hyperparameters from Section 3.2 of:
-  "A Fuzzy Convolutional Neural Network for Multi-Focus Image Fusion"
-  Bhalla et al., JVCIR 2022.
+Exact hyperparameters for FCNN-MFIF:
 
-Hyperparameters (STRICT — paper Table):
+Hyperparameters:
   Optimizer    : SGD (NOT Adam)
   Learning rate: 0.002
   Momentum     : 0.9
@@ -53,7 +51,7 @@ from utils.fuzzy_preprocessing import fuzzify_image
 
 
 # ---------------------------------------------------------------------------
-# Hyperparameters (paper-exact)
+# Hyperparameters
 # ---------------------------------------------------------------------------
 LR           = 0.002
 MOMENTUM     = 0.9
@@ -222,7 +220,7 @@ def main() -> None:
     n_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(f"[INFO] Model parameters: {n_params:,}")
 
-    # ── Loss & Optimiser (paper-exact) ────────────────────────────────────────
+    # ── Loss & Optimiser
     # CrossEntropyLoss works on raw logits but our model outputs softmax.
     # We use NLLLoss(log(probs)) which is equivalent to CE for softmax outputs.
     criterion = nn.NLLLoss()

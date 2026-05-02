@@ -3,14 +3,12 @@ inference/fusion.py
 ====================
 Final fusion stage for the FCNN-MFIF pipeline.
 
-Implements Sections 2.3, 2.4, and Algorithm 1 of:
-  "A Fuzzy Convolutional Neural Network for Multi-Focus Image Fusion"
-  Bhalla et al., JVCIR 2022.
+Implements the core fusion Algorithm for FCNN-MFIF.
 
 Full pipeline (after CNN produces Score Map):
 ─────────────────────────────────────────────────────────────────────
   Step 1  Focus Map (FM)       ← overlap-averaging of SM → full res
-  Step 2  Binary Map (BM)      ← threshold FM at T = 0.4  (paper fixed)
+  Step 2  Binary Map (BM)      ← threshold FM at T = 0.4
   Step 3  Initial Decision Map ← bwareaopen: remove regions < 1% of image
            (ID')
   Step 4  Final Decision Map   ← Guided Filter (r=7, ε=0.2) on ID'
@@ -46,10 +44,10 @@ from utils.fuzzy_preprocessing import fuzzify_pair
 from utils.image_utils import TARGET_SIZE
 from inference.score_map import generate_score_map, generate_focus_map, PATCH_SIZE, STRIDE
 
-# Paper-fixed constants (Section 2.3 / Eq. 10-13)
-THRESHOLD     = 0.4   # binary segmentation threshold  (Eq. 10)
-GUIDED_RADIUS = 7     # guided filter window radius    (Eq. 12)
-GUIDED_EPS    = 0.2   # guided filter regularisation   (Eq. 12)
+#
+THRESHOLD     = 0.4   # binary segmentation threshold
+GUIDED_RADIUS = 7     # guided filter window radius
+GUIDED_EPS    = 0.2   # guided filter regularisation
 
 
 # ---------------------------------------------------------------------------
@@ -62,14 +60,14 @@ def generate_binary_map(
     """
     Apply threshold T=0.4 to Focus Map to produce Binary Map.
 
-    Paper Eq. (10):
+
         BM(x,y) = 1  if FM(x,y) > T
                   0  otherwise
 
     Parameters
     ----------
     fm        : (H, W) float32 Focus Map, values ∈ [0,1]
-    threshold : 0.4  (paper-fixed, do NOT change)
+    threshold : 0.4
 
     Returns
     -------
@@ -89,7 +87,7 @@ def remove_small_regions(
     """
     Remove misclassified small connected regions from Binary Map.
 
-    Paper Eq. (11-12):
+
         ID' = bwareaopen(BM, area)
         area = 0.01 × H × W
 
@@ -102,7 +100,7 @@ def remove_small_regions(
     ----------
     bm       : (H, W) uint8 Binary Map {0,1}
     min_area : minimum region size in pixels.
-               Default = 0.01 × H × W  (paper Eq. 12)
+               Default = 0.01 × H × W
 
     Returns
     -------
@@ -110,7 +108,7 @@ def remove_small_regions(
     """
     H, W = bm.shape
     if min_area is None:
-        min_area = 0.01 * H * W   # Eq. (12): area = 0.01 × ht × wt
+        min_area = 0.01 * H * W   # area = 0.01 × ht × wt
 
     ID = bm.copy()
 
@@ -144,10 +142,10 @@ def guided_filter(
 
     Removes edge artifacts and refines boundaries of the binary decision map.
 
-    Paper (Section 2.3, Eq. 12):
+
         r = 7,  ε = 0.2
         Guidance image = mean(A', B')  — average of both fuzzified sources
-                         (paper is silent on exact choice; using the mean
+
                           is the standard MFIF convention so neither source
                           image biases the decision boundary)
 
@@ -164,8 +162,8 @@ def guided_filter(
     ----------
     guidance : (H, W) float  guidance image — use mean(A', B') in fuse_images()
     src      : (H, W) float  input to filter (Initial Decision Map ID')
-    radius   : 7   (paper-exact)
-    eps      : 0.2 (paper-exact)
+    radius   : 7
+    eps      : 0.2
 
     Returns
     -------
@@ -202,7 +200,7 @@ def pixel_wise_fusion(
     B:   np.ndarray,
 ) -> np.ndarray:
     """
-    Final image fusion using paper Eq. (13):
+    Final image fusion using
 
         F(x,y) = FD(x,y) · A'(x,y) + (1 − FD(x,y)) · B'(x,y)
 
@@ -232,7 +230,7 @@ def fuse_images(
     B_gray: np.ndarray,
     model,
     device=None,
-    stride:    int   = 2,          # paper Eq.(8): stride=2 → SM=253×253
+    stride:    int   = 2,          #
     threshold: float = THRESHOLD,
     gf_radius: int   = GUIDED_RADIUS,
     gf_eps:    float = GUIDED_EPS,
@@ -259,10 +257,10 @@ def fuse_images(
     B_gray    : (H, W) float32 or uint8  grayscale image B  (raw, [0,255])
     model     : trained SiameseFCNN
     device    : torch.device (auto-detected if None)
-    stride    : 2 (paper-exact: stride=2 → SM=(H/2-8+1)×(W/2-8+1)=253×253)
-    threshold : 0.4 (paper-exact)
-    gf_radius : 7 (paper-exact)
-    gf_eps    : 0.2 (paper-exact)
+    stride    : 2
+    threshold : 0.4
+    gf_radius : 7
+    gf_eps    : 0.2
     batch_size: patches processed per forward pass
     verbose   : print progress
 
@@ -328,14 +326,14 @@ def fuse_images(
     # ── Step 5: Guided Filter (r=7, ε=0.2) ──────────────────────────────────
     _log(f"Applying Guided Filter (r={gf_radius}, ε={gf_eps}) ...")
     # Guidance = mean(A', B'): preserves edges from BOTH sources equally.
-    # Paper is silent on exact choice; mean(A',B') is the standard MFIF
+    #
     # convention so neither source image biases the decision boundary.
     guidance = (A_fuzz + B_fuzz) / 2.0
     FD = guided_filter(guidance, ID.astype(np.float32),
                        radius=gf_radius, eps=gf_eps)
     _log(f"  FD range=[{FD.min():.3f}, {FD.max():.3f}]")
 
-    # ── Step 6: Pixel-wise Fusion (Eq. 13) ───────────────────────────────────
+    # ── Step 6: Pixel-wise Fusion ───────────────────────────────────
     _log("Fusing: F = FD·A' + (1−FD)·B' ...")
     fused = pixel_wise_fusion(FD, A_fuzz, B_fuzz)
 

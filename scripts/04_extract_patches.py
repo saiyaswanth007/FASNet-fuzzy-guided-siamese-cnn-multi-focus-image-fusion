@@ -4,12 +4,9 @@ scripts/04_extract_patches.py
 ===============================
 Extracts 16×16 non-overlapping patches from both focused (original) and
 blurred images, and saves them as .npy arrays for training.
-
-Paper reference (Section 3.2, Table 3):
-  "The network training has been done with a patch size of 16 × 16."
-  "Each image is cropped into patches of size 16 × 16 without overlapping
-   using bicubic transformation."
-  "The patch size was chosen to be 16 × 16, as explained in Table 3."
+  The network training has been done with a patch size of 16 × 16.
+  Each image is cropped into patches of size 16 × 16 without overlapping
+  using bicubic transformation.
 
 Two sets of patches are saved:
   datasets/synthetic/patches/focused/  ← from raw_imagenet (label=1 source)
@@ -147,7 +144,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--patch-size", type=int, default=PATCH_SIZE,
-        help=f"Patch size (paper: {PATCH_SIZE}, default: {PATCH_SIZE})"
+        help=f"Patch size (default: {PATCH_SIZE})"
     )
     args = parser.parse_args()
 

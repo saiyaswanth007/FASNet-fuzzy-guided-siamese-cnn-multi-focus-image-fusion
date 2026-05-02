@@ -4,7 +4,7 @@
 # =============================================================================
 # Full end-to-end pipeline for:
 #   "A Fuzzy Convolutional Neural Network for Multi-Focus Image Fusion"
-#   Bhalla et al., JVCIR 2022
+#   FCNN-MFIF
 #
 # Stages:
 #   0. Dependency check / install
@@ -15,7 +15,7 @@
 #   5. Build training dataset NPZ (5,000 pairs, balanced)
 #   6. Train Siamese FCNN (SGD, lr=0.002, 30 epochs)
 #   7. Verify full pipeline output
-#   8. Run Fusion on all test pairs (stride=2, paper-exact SM=253×253)
+#   8. Evaluate methods (Average, Max, NSWT, GF, CNN, FCNN) + metrics + plots
 #
 # Usage:
 #   chmod +x run_pipeline.sh
@@ -23,12 +23,15 @@
 #   ./run_pipeline.sh --skip-download        # skip COCO download (already done)
 #   ./run_pipeline.sh --epochs 50            # custom epoch count
 #   ./run_pipeline.sh --workers 8            # more CPU workers
-#   ./run_pipeline.sh --stage 8              # run fusion only (model already trained)
+#   ./run_pipeline.sh --stage 8              # run evaluation only
 #   ./run_pipeline.sh --fast-stride          # use stride=8 for fast inference (~30s/pair)
 #
 # =============================================================================
 
 set -euo pipefail
+
+PYTHON=$(command -v python3 || command -v python || true)
+[[ -z "$PYTHON" ]] && { echo "python3 not found. Install Python 3.9+ and retry."; exit 1; }
 
 # ── Colours ───────────────────────────────────────────────────────────────────
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'
@@ -46,11 +49,11 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WORKERS=4
 EPOCHS=30
 BATCH_SIZE=64
-N_IMAGES=1000          # source images (use 1000 for disk safety; 5000 for full paper)
+N_IMAGES=1000          # source images (use 1000 for disk safety; 5000 for full run)
 START_STAGE=0
 SKIP_DOWNLOAD=false
 SKIP_TRAIN=false
-FAST_STRIDE=false      # false=stride 2 (paper-exact, slow), true=stride 8 (fast)
+FAST_STRIDE=false      # false=stride 2 (exact, slow), true=stride 8 (fast)
 ZIP_PATH=""            # path to Multi-focus-Image-Fusion-Dataset-master.zip
 OUT_DIR="outputs"      # root output directory for fusion results
 
@@ -90,14 +93,14 @@ if [[ "$FAST_STRIDE" == "true" ]]; then
   STRIDE_NOTE="stride=8 (fast, SM=64×64)"
 else
   STRIDE=2
-  STRIDE_NOTE="stride=2 (paper-exact, SM=253×253)"
+  STRIDE_NOTE="stride=2 (exact, SM=253×253)"
 fi
 
 # ── Header ────────────────────────────────────────────────────────────────────
 echo -e "\n${BOLD}${CYAN}"
 echo "  ┌─────────────────────────────────────────────────────┐"
 echo "  │  FCNN-MFIF  Full Pipeline                           │"
-echo "  │  Bhalla et al., JVCIR 2022                          │"
+echo "  │  FCNN-MFIF Architecture                             │"
 echo "  └─────────────────────────────────────────────────────┘"
 echo -e "${NC}"
 info "Working directory : $SCRIPT_DIR"
@@ -121,9 +124,6 @@ should_run() { [[ "$1" -ge "$START_STAGE" ]]; }
 if should_run 0; then
   step 0 "Dependency Check"
 
-  # Python
-  PYTHON=$(command -v python3 || command -v python || true)
-  [[ -z "$PYTHON" ]] && fail "python3 not found. Install Python 3.9+ and retry."
   PY_VER=$($PYTHON --version 2>&1)
   ok "Python: $PY_VER"
 
@@ -365,10 +365,10 @@ if should_run 7; then
 fi
 
 # =============================================================================
-# STAGE 8: Run Fusion on All Test Pairs
+# STAGE 8: Run Evaluation on All Test Pairs (Baselines + FCNN)
 # =============================================================================
 if should_run 8; then
-  step 8 "Run Fusion on All Test Pairs ($STRIDE_NOTE)"
+  step 8 "Evaluate Methods on All Test Pairs ($STRIDE_NOTE)"
 
   BEST_CKPT="$SCRIPT_DIR/checkpoints/fcnn_best.pt"
   [[ ! -f "$BEST_CKPT" ]] && fail "No trained checkpoint found at $BEST_CKPT. Run stage 6 first."
@@ -385,22 +385,20 @@ if should_run 8; then
   else
     info "Found $N_PAIRS test pairs across Dataset 1 (Lytro) and Dataset 2 (MFIF)"
     if [[ "$STRIDE" -eq 2 ]]; then
-      info "Using stride=2 (paper-exact). Est. time: ~$(( N_PAIRS * 8 )) min on CPU"
+      info "Using FCNN stride=2 (exact). Est. time: ~$(( N_PAIRS * 8 )) min on CPU"
       warn "Tip: use --fast-stride to reduce this to ~$(( N_PAIRS / 2 )) min (stride=8)"
     else
-      info "Using stride=8 (fast mode). Est. time: ~$(( N_PAIRS / 2 )) min on CPU"
+      info "Using FCNN stride=8 (fast mode). Est. time: ~$(( N_PAIRS / 2 )) min on CPU"
     fi
 
-    $PYTHON inference/fusion.py \
+    $PYTHON evaluate.py \
       --model "$BEST_CKPT" \
-      --all-pairs \
+      --dataset both \
       --out-dir "$OUT_DIR" \
-      --stride "$STRIDE" \
-      --batch-size 512 \
-      || fail "Fusion inference failed."
+      $( [[ "$FAST_STRIDE" == "true" ]] && echo "--fast-stride" ) \
+      || fail "Evaluation failed."
 
-    N_FUSED=$(find "$OUT_DIR" -name "*_fused.png" 2>/dev/null | wc -l)
-    ok "Fusion complete — $N_FUSED fused images saved to $OUT_DIR/"
+    ok "Evaluation complete — results, CSV, and plots saved to $OUT_DIR/"
   fi
 fi
 
@@ -416,30 +414,32 @@ echo ""
 NPZ_NORM="$SCRIPT_DIR/datasets/synthetic/training_dataset_norm.npz"
 BEST_PT="$SCRIPT_DIR/checkpoints/fcnn_best.pt"
 REPORT="$SCRIPT_DIR/pipeline_verification_report.txt"
-FUSED_COUNT=$(find "$OUT_DIR" -name "*_fused.png" 2>/dev/null | wc -l)
+FUSED_COUNT=$(find "$OUT_DIR" -name "fused_FCNN.png" 2>/dev/null | wc -l)
+CSV_FILE="$OUT_DIR/results.csv"
 
 echo -e "${BOLD}Key outputs:${NC}"
 [[ -f "$NPZ_NORM"      ]] && ok "Training data  : $NPZ_NORM"      || warn "Training NPZ   : not found"
 [[ -f "$BEST_PT"       ]] && ok "Best model     : $BEST_PT"       || warn "Best model     : not trained yet"
 [[ -f "$REPORT"        ]] && ok "Verify report  : $REPORT"
-[[ "$FUSED_COUNT" -gt 0 ]] && ok "Fused images   : $FUSED_COUNT images in $OUT_DIR/" \
-                           || warn "Fused images   : none yet (run stage 8)"
+[[ -f "$CSV_FILE"      ]] && ok "Metrics CSV    : $CSV_FILE"
+[[ "$FUSED_COUNT" -gt 0 ]] && ok "Evaluated pairs: $FUSED_COUNT pairs in $OUT_DIR/" \
+                           || warn "Evaluated pairs: none yet (run stage 8)"
 
 echo ""
 echo -e "${BOLD}Pipeline equations implemented:${NC}"
-echo "  Fuzzification   S-membership Eq.(3)"
-echo "  Score Map       Siamese CNN, stride=$STRIDE → SM"
-echo "  Focus Map       Overlap averaging Eq.(8)"
-echo "  Binary Map      BM = (FM > 0.4) Eq.(9-10)"
-echo "  Small regions   bwareaopen(BM, 0.01·H·W) Eq.(11-12)"
-echo "  Guided filter   r=7, ε=0.2, guidance=mean(A',B')"
-echo "  Fusion          F = FD·A' + (1−FD)·B'  Eq.(13)"
+echo "  Fuzzification   S-membership"
+echo "  CNN Infer       Siamese Patch classification"
+echo "  Focus Map       Overlap averaging"
+echo "  Binary Map      BM = (FM > 0.4)"
+echo "  Small regions   bwareaopen(BM, 0.01·H·W)"
+echo "  Guided Filter   Refine BM using (A'+B')/2"
+echo "  Fusion          F = FD·A' + (1−FD)·B'"
+echo "  Metrics         MI, EI, SS, HP"
 
 echo ""
 echo -e "${BOLD}Useful commands:${NC}"
-echo "  Fusion only:    ./run_pipeline.sh --stage 8 --skip-train"
-echo "  Fast mode:      ./run_pipeline.sh --stage 8 --fast-stride --skip-train"
+echo "  Evaluate all:   ./run_pipeline.sh --stage 8 --skip-train"
+echo "  Fast eval:      ./run_pipeline.sh --stage 8 --fast-stride --skip-train"
 echo "  Re-train:       python3 train.py --epochs 50 --resume checkpoints/fcnn_best.pt"
-echo "  Single pair:    python3 inference/fusion.py --model checkpoints/fcnn_best.pt \\"
-echo "                    --pair-dir datasets/real/dataset1_lytro/pair_001 --stride 2"
+echo "  Manual run:     python3 evaluate.py --model checkpoints/fcnn_best.pt --fast-stride"
 echo ""

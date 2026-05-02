@@ -7,7 +7,7 @@ Ingests the downloaded Multi-focus-Image-Fusion-Dataset-master.zip
 directory structure.
 
 The dataset contains multi-image sequences (3-4 images per scene).
-The paper uses PAIRS, so we take image[0] as A and image[1] as B
+We take image[0] as A and image[1] as B
 for each scene group.
 
 Usage:
@@ -142,7 +142,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--n-pairs", type=int, default=20,
-        help="Number of scene pairs to extract (paper: 20, default: 20)"
+        help="Number of scene pairs to extract"
     )
     args = parser.parse_args()
 
@@ -260,8 +260,7 @@ def main() -> None:
     print(f"DONE  — {actual} pairs written to {out_dir}")
     if actual < args.n_pairs:
         print(f"[NOTE] Only {actual}/{args.n_pairs} pairs available in this dataset.")
-        print("       The paper uses 20 Lytro pairs; this dataset has multi-view")
-        print("       scenes. All valid A/B pairs have been extracted.")
+        print("       All valid A/B pairs have been extracted.")
     print(f"{'='*55}")
     print("\nNext: python3 verify_pipeline.py --min-source-count 100")
 

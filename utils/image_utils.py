@@ -3,16 +3,14 @@ utils/image_utils.py
 ====================
 Shared image processing utilities for the FCNN-MFIF dataset pipeline.
 
-All functions exactly match the preprocessing steps described in:
-  "A Fuzzy Convolutional Neural Network for Multi-Focus Image Fusion"
-  Bhalla et al., Journal of Visual Communication and Image Representation, 2022.
+All functions match the preprocessing steps described for FCNN-MFIF.
 
-Key paper specs implemented here:
-  - Image size  : 520 × 520 pixels  (Section 3.1)
-  - Color space : Grayscale          (Section 3.2)
-  - Blur        : Gaussian σ = 0.5, 5 sequential levels (Section 3.2 / Fig 4)
-  - Patch size  : 16 × 16, no overlap, bicubic crop    (Section 3.2 / Table 3)
-  - Augment     : 90° and 180° rotations               (Section 3.2)
+Key specs implemented here:
+  - Image size  : 520 × 520 pixels
+  - Color space : Grayscale
+  - Blur        : Gaussian σ = 0.5, 5 sequential levels
+  - Patch size  : 16 × 16, no overlap, bicubic crop
+  - Augment     : 90° and 180° rotations
 """
 
 from __future__ import annotations
@@ -23,12 +21,12 @@ from PIL import Image
 from scipy.ndimage import gaussian_filter
 
 # ---------------------------------------------------------------------------
-# Constants (paper-defined)
+# Constants
 # ---------------------------------------------------------------------------
-TARGET_SIZE: tuple[int, int] = (520, 520)   # Section 3.1
-PATCH_SIZE:  int = 16                        # Table 3
-BLUR_SIGMA:  float = 0.5                     # Section 3.2
-N_BLUR_LEVELS: int = 5                       # Section 3.2 / Fig 4
+TARGET_SIZE: tuple[int, int] = (520, 520)
+PATCH_SIZE:  int = 16
+BLUR_SIGMA:  float = 0.5
+N_BLUR_LEVELS: int = 5
 
 
 # ---------------------------------------------------------------------------
@@ -44,7 +42,7 @@ def load_grayscale(path: str,
     np.ndarray of shape (H, W), dtype float32, values in [0, 255].
     """
     img = Image.open(path).convert("L")          # 'L' = single-channel grayscale
-    img = img.resize(size, Image.BICUBIC)         # bicubic as per Section 3.2
+    img = img.resize(size, Image.BICUBIC)
     return np.array(img, dtype=np.float32)
 
 
@@ -59,13 +57,13 @@ def save_grayscale(arr: np.ndarray, path: str) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Blurring  (Section 3.2, Fig 4)
+# Blurring
 # ---------------------------------------------------------------------------
 def apply_gaussian_blur(img: np.ndarray, sigma: float = BLUR_SIGMA) -> np.ndarray:
     """
     Apply a Gaussian filter with the given *sigma* to a 2-D grayscale array.
 
-    Matches paper:
+    Matches original specs:
         "Gaussian filters with a standard deviation of 0.5"
         "In the first level, the simulation uses a Gaussian filter with
          a 0.5 standard deviation value. And in the second level, the
@@ -101,15 +99,14 @@ def generate_blur_levels(img: np.ndarray,
 
 
 # ---------------------------------------------------------------------------
-# Patch extraction  (Section 3.2, Table 3)
+# Patch extraction
 # ---------------------------------------------------------------------------
 def extract_patches_no_overlap(img: np.ndarray,
                                 patch_size: int = PATCH_SIZE) -> list[np.ndarray]:
     """
     Crop *img* into non-overlapping *patch_size* × *patch_size* patches.
 
-    Paper: "Each image is cropped into patches of size 16 × 16 without
-            overlapping using bicubic transformation."
+    Crop *img* into non-overlapping *patch_size* × *patch_size* patches.
 
     Only complete patches are kept (border pixels that don't fill a full
     patch are discarded, matching standard CNN patch extraction practice).
@@ -128,15 +125,13 @@ def extract_patches_no_overlap(img: np.ndarray,
 
 
 # ---------------------------------------------------------------------------
-# Data augmentation  (Section 3.2)
+# Data augmentation
 # ---------------------------------------------------------------------------
 def augment_patch(patch: np.ndarray) -> list[np.ndarray]:
     """
     Return augmented copies of *patch*.
 
-    Paper: "Images are rotated by 90° and 180° in both horizontal and
-            vertical directions. Data augmentation is done to increase
-            the dataset size."
+    Return augmented copies of *patch*.
 
     Returns 5 variants:
       [original, rot90, rot180, horizontal_flip, vertical_flip]
